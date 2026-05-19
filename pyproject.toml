@@ -1,0 +1,54 @@
+[project]
+name = "vexo"
+version = "0.1.0"
+description = "Vexo CRM"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.18.4",
+    "dishka>=1.10.1",
+    "fastapi>=0.136.1",
+    "orjson>=3.11.9",
+    "psycopg[binary]>=3.3.4",
+    "sqlalchemy[asyncio]>=2.0.49",
+    "uuid7>=0.1.0",
+    "uvicorn>=0.47.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.13"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vexo"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.0",
+]
+lint = [
+    "ruff>=0.15.13",
+]
+
+test = [
+    "pytest>=9.0.3",
+]
+
+[tool.ruff]
+src = ["src"]
+include = ["src/**.py", "tests/**.py"]
+exclude = ["src/vexo/infrastructure/persistence/migrations/**.py"]
+target-version = "py312"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/vexo/infrastructure/persistence/migrations/env.py" = ["ERA001", "INP001", "E402"]
+"tests/**" = ["S101"]
