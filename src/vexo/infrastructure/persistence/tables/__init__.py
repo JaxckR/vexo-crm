@@ -5,6 +5,7 @@ __all__ = (
     "roles_table",
     "roles_permissions_table",
     "permissions_table",
+    "sessions_table",
     # Ostal'noe
     "setup_tables",
     "mapper_registry",
@@ -19,6 +20,7 @@ from .roles import (
     roles_permissions_table,
     _map_roles_permissions_table,
 )
+from .sessions import sessions_table, _map_sessions_table
 from .users import users_table, _map_users_table
 
 
@@ -28,3 +30,4 @@ def setup_tables() -> None:
     _map_roles_table()
     _map_permissions_table()
     _map_roles_permissions_table()
+    _map_sessions_table()
