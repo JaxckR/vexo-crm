@@ -13,3 +13,7 @@ class AlreadyExistsError(ApplicationException): ...
 
 
 class UnauthorizedError(ApplicationException): ...
+
+
+class PermissionDeniedError(ApplicationException):
+    message: str = "Permission denied"

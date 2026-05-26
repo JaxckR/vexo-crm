@@ -8,7 +8,10 @@ sessions_table = sa.Table(
     mapper_registry.metadata,
     sa.Column("id", sa.String(), primary_key=True),
     sa.Column(
-        "user_id", sa.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False
+        "user_id",
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
     ),
     sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),

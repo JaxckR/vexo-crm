@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from vexo.domain.entities.organization import OrganizationId
-from vexo.domain.entities.role import Role
 from vexo.domain.entities.user import User
 
 
@@ -12,7 +11,6 @@ class UserDTO:
     first_name: str
     last_name: str
     organization_id: OrganizationId
-    role: Role
 
     @staticmethod
     def from_entity(entity: User) -> "UserDTO":
@@ -22,5 +20,4 @@ class UserDTO:
             first_name=entity.first_name,
             last_name=entity.last_name,
             organization_id=entity.organization_id,
-            role=entity.role,
         )

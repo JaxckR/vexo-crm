@@ -4,11 +4,20 @@ from vexo.infrastructure.adapters.hasher import HasherImpl
 from vexo.infrastructure.adapters.id_generator import IdGeneratorImpl
 from vexo.infrastructure.adapters.idp import IdentityProviderImpl
 from vexo.infrastructure.adapters.verifier import VerifierImpl
+from vexo.infrastructure.persistence.adapters.organization_repository import (
+    OrganizationRepositoryImpl,
+)
+from vexo.infrastructure.persistence.adapters.permission_repository import (
+    PermissionRepositoryImpl,
+)
 from vexo.infrastructure.persistence.adapters.role_repository import RoleRepositoryImpl
 from vexo.infrastructure.persistence.adapters.session_repository import (
     SessionRepositoryImpl,
 )
-from vexo.infrastructure.persistence.adapters.user_repository import UserRepositoryImpl
+from vexo.infrastructure.persistence.adapters.user_repository import (
+    UserRepositoryImpl,
+    UserRoleRepositoryImpl,
+)
 
 
 class InfrastructureProvider(Provider):
@@ -25,4 +34,7 @@ class InfrastructureProvider(Provider):
         WithParents[UserRepositoryImpl],
         WithParents[RoleRepositoryImpl],
         WithParents[SessionRepositoryImpl],
+        WithParents[OrganizationRepositoryImpl],
+        WithParents[PermissionRepositoryImpl],
+        WithParents[UserRoleRepositoryImpl],
     )

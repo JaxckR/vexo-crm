@@ -1,8 +1,6 @@
 import sqlalchemy as sa
-from sqlalchemy.orm import relationship
 
-from vexo.domain.entities.role import Role
-from vexo.domain.entities.user import User
+from vexo.domain.entities.user import User, UserRole
 from vexo.infrastructure.persistence.tables.common import mapper_registry
 
 users_table = sa.Table(
@@ -14,13 +12,13 @@ users_table = sa.Table(
     sa.Column("email", sa.String, unique=True, nullable=False),
     sa.Column("first_name", sa.String, nullable=False),
     sa.Column("last_name", sa.String, nullable=False),
+    sa.Column("is_active", sa.Boolean, server_default=sa.text("true"), nullable=False),
     sa.Column(
         "organization_id",
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("organizations.id"),
-        nullable=False,
+        sa.ForeignKey("organizations.id", ondelete="SET NULL"),
+        nullable=True,
     ),
-    sa.Column("role_id", sa.UUID, sa.ForeignKey("roles.id"), nullable=False),
     sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     sa.Column(
         "updated_at",
@@ -28,6 +26,32 @@ users_table = sa.Table(
         onupdate=sa.func.now(),
         server_onupdate=sa.func.now(),
     ),
+)
+
+users_roles_table = sa.Table(
+    "users_roles",
+    mapper_registry.metadata,
+    sa.Column("id", sa.BigInteger, primary_key=True, autoincrement=True),
+    sa.Column(
+        "user_id",
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    sa.Column(
+        "role_id",
+        sa.UUID(as_uuid=True),
+        sa.ForeignKey("roles.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+    sa.Column(
+        "updated_at",
+        sa.DateTime(timezone=True),
+        onupdate=sa.func.now(),
+        server_onupdate=sa.func.now(),
+    ),
+    sa.UniqueConstraint("user_id", "role_id"),
 )
 
 
@@ -42,10 +66,25 @@ def _map_users_table() -> None:
             "email": users_table.c.email,
             "first_name": users_table.c.first_name,
             "last_name": users_table.c.last_name,
+            "is_active": users_table.c.is_active,
             "organization_id": users_table.c.organization_id,
             "created_at": users_table.c.created_at,
             "updated_at": users_table.c.updated_at,
-            "role": relationship(Role, lazy="joined"),
+        },
+        column_prefix="_",
+    )
+
+
+def _map_users_roles_table() -> None:
+    _ = mapper_registry.map_imperatively(
+        UserRole,
+        users_roles_table,
+        properties={
+            "id": users_roles_table.c.id,
+            "user_id": users_roles_table.c.user_id,
+            "role_id": users_roles_table.c.role_id,
+            "created_at": users_roles_table.c.created_at,
+            "updated_at": users_roles_table.c.updated_at,
         },
         column_prefix="_",
     )

@@ -1,8 +1,8 @@
-"""Added users, roles and organizations tables
+"""Added users, role, organization and RBAC tables
 
-Revision ID: 203348441c29
+Revision ID: 20fa10d5e665
 Revises:
-Create Date: 2026-05-21 13:04:24.421130
+Create Date: 2026-05-24 09:45:32.404798
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '203348441c29'
+revision: str = '20fa10d5e665'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,8 +30,8 @@ def upgrade() -> None:
     )
     op.create_table('permissions',
     sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('resource', sa.Enum('USERS', name='resource'), nullable=False),
-    sa.Column('action', sa.Enum('READ', 'CREATE', 'DELETE', 'UPDATE', 'IMPORT', 'EXPORT', name='action'), nullable=False),
+    sa.Column('resource', sa.Enum('CONTACTS', 'COMPANIES', 'LEADS', 'DEALS', 'TASKS', 'PRODUCTS', 'REPORTS', 'USERS', 'SETTINGS', 'ORGANIZATIONS', 'ROLES', name='resource'), nullable=False),
+    sa.Column('action', sa.Enum('CREATE', 'READ', 'UPDATE', 'DELETE', 'IMPORT', 'EXPORT', 'CONVERT', name='action'), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_permissions')),
     sa.UniqueConstraint('resource', 'action', name=op.f('uq_permissions_resource_action'))
     )
@@ -42,9 +42,25 @@ def upgrade() -> None:
     sa.Column('organization_id', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_roles_organization_id_organizations')),
+    sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_roles_organization_id_organizations'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_roles')),
     sa.UniqueConstraint('name', 'organization_id', name=op.f('uq_roles_name_organization_id'))
+    )
+    op.create_table('users',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('login', sa.String(), nullable=False),
+    sa.Column('password_hash', sa.String(), nullable=False),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('first_name', sa.String(), nullable=False),
+    sa.Column('last_name', sa.String(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), server_default=sa.text('true'), nullable=False),
+    sa.Column('organization_id', sa.UUID(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_users_organization_id_organizations'), ondelete='SET NULL'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_users')),
+    sa.UniqueConstraint('email', name=op.f('uq_users_email')),
+    sa.UniqueConstraint('login', name=op.f('uq_users_login'))
     )
     op.create_table('roles_permissions',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -55,21 +71,24 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_roles_permissions')),
     sa.UniqueConstraint('role_id', 'permission_id', name=op.f('uq_roles_permissions_role_id_permission_id'))
     )
-    op.create_table('users',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('login', sa.String(), nullable=False),
-    sa.Column('password_hash', sa.String(), nullable=False),
-    sa.Column('email', sa.String(), nullable=False),
-    sa.Column('first_name', sa.String(), nullable=False),
-    sa.Column('last_name', sa.String(), nullable=False),
-    sa.Column('organization_id', sa.UUID(), nullable=False),
+    op.create_table('sessions',
+    sa.Column('id', sa.String(), nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_sessions_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_sessions'))
+    )
+    op.create_table('users_roles',
+    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('role_id', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_users_organization_id_organizations')),
-    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], name=op.f('fk_users_role_id_roles')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_users')),
-    sa.UniqueConstraint('login', name=op.f('uq_users_login'))
+    sa.ForeignKeyConstraint(['role_id'], ['roles.id'], name=op.f('fk_users_roles_role_id_roles'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_users_roles_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_users_roles')),
+    sa.UniqueConstraint('user_id', 'role_id', name=op.f('uq_users_roles_user_id_role_id'))
     )
     # ### end Alembic commands ###
 
@@ -77,8 +96,10 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('users')
+    op.drop_table('users_roles')
+    op.drop_table('sessions')
     op.drop_table('roles_permissions')
+    op.drop_table('users')
     op.drop_table('roles')
     op.drop_table('permissions')
     op.drop_table('organizations')

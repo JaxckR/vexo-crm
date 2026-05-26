@@ -1,5 +1,7 @@
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 
+from vexo.domain.entities.permission import Permission
 from vexo.domain.entities.role import Role, RolePermission
 from vexo.infrastructure.persistence.tables.common import mapper_registry
 
@@ -12,7 +14,7 @@ roles_table = sa.Table(
     sa.Column(
         "organization_id",
         sa.UUID(as_uuid=True),
-        sa.ForeignKey("organizations.id"),
+        sa.ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
     ),
     sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
@@ -53,6 +55,9 @@ def _map_roles_table() -> None:
             "organization_id": roles_table.c.organization_id,
             "created_at": roles_table.c.created_at,
             "updated_at": roles_table.c.updated_at,
+            "permissions": relationship(
+                Permission, secondary=roles_permissions_table, lazy="joined"
+            ),
         },
         column_prefix="_",
     )

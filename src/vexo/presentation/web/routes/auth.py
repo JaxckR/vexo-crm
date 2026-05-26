@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Annotated
 
 from dishka import FromDishka
@@ -35,7 +35,7 @@ async def login(
         httponly=True,
         secure=True,
         samesite="strict",
-        max_age=int((result.expires_at - datetime.now()).total_seconds()),
+        max_age=int((result.expires_at - datetime.now(UTC)).total_seconds()),
     )
 
 

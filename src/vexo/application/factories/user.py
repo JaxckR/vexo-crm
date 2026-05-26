@@ -6,8 +6,6 @@ from typing import Final, cast
 from vexo.application.exceptions import ApplicationException
 from vexo.application.ports import Hasher
 from vexo.application.ports.id_generator import IdGenerator
-from vexo.domain.entities.organization import OrganizationId
-from vexo.domain.entities.role import Role
 from vexo.domain.entities.user import User
 
 
@@ -40,8 +38,6 @@ class UserFactory:
         password: str,
         first_name: str,
         last_name: str,
-        organization_id: OrganizationId,
-        role: Role,
     ) -> User:
         self._validate_password(password)
         if not self.LOGIN_REGEX.match(login):
@@ -59,8 +55,8 @@ class UserFactory:
             password_hash=password_hash,
             first_name=first_name,
             last_name=last_name,
-            organization_id=organization_id,
-            role=role,
+            organization_id=None,
+            is_active=True,
             created_at=cast(datetime, cast(object, None)),
             updated_at=None,
         )

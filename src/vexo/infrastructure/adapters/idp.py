@@ -5,14 +5,21 @@ from starlette.requests import Request
 from vexo.application.exceptions import UnauthorizedError
 from vexo.application.ports import IdentityProvider
 from vexo.application.ports.repositories.session import SessionRepository
+from vexo.application.ports.repositories.user import UserRepository
 from vexo.domain.entities.session import SessionId
-from vexo.domain.entities.user import UserId
+from vexo.domain.entities.user import UserId, User
 
 
 class IdentityProviderImpl(IdentityProvider):
-    def __init__(self, request: Request, session_repository: SessionRepository) -> None:
+    def __init__(
+        self,
+        request: Request,
+        session_repository: SessionRepository,
+        user_repository: UserRepository,
+    ) -> None:
         self._request = request
         self._session_repository = session_repository
+        self._user_repository = user_repository
 
     async def get_current_user_id(self) -> UserId:
         session_id = self._request.cookies.get("session_id")
@@ -29,3 +36,12 @@ class IdentityProviderImpl(IdentityProvider):
             raise UnauthorizedError("You are not logged in")
 
         return session.user_id
+
+    async def get_user(self) -> User:
+        session_id = await self.get_current_user_id()
+        user = await self._user_repository.get(session_id)
+
+        if user is None:
+            raise UnauthorizedError("You are not logged in")
+
+        return user

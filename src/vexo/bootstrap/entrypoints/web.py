@@ -10,12 +10,14 @@ from fastapi import FastAPI
 from vexo.bootstrap.config import get_config
 from vexo.bootstrap.ioc import get_async_container
 from vexo.bootstrap.logging import setup_logging
+from vexo.bootstrap.seed import permissions_seed
 from vexo.infrastructure.persistence.tables import setup_tables
 from vexo.presentation.web import setup_exceptions, setup_routes, setup_middleware
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    await permissions_seed(app.state.dishka_container)
     yield
     await app.state.dishka_container.close()
 

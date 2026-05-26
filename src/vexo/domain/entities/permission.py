@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Final, NewType
+from typing import NewType
 from uuid import UUID
 
 from vexo.domain.entities.common import IDEntity
@@ -9,24 +9,30 @@ PermissionId = NewType("PermissionId", UUID)
 
 
 class Action(StrEnum):
-    READ = "read"
     CREATE = "create"
-    DELETE = "delete"
+    READ = "read"
     UPDATE = "update"
+    DELETE = "delete"
     IMPORT = "import"
     EXPORT = "export"
+    CONVERT = "convert"
 
 
 class Resource(StrEnum):
+    CONTACTS = "contacts"
+    COMPANIES = "companies"
+    LEADS = "leads"
+    DEALS = "deals"
+    TASKS = "tasks"
+    PRODUCTS = "products"
+    REPORTS = "reports"
     USERS = "users"
+    SETTINGS = "settings"
+    ORGANIZATIONS = "organizations"
+    ROLES = "roles"
 
 
 @dataclass
 class Permission(IDEntity[PermissionId]):
     resource: Resource
     action: Action
-
-
-RESOURCE_ACTIONS: Final[dict[Resource, list[Action]]] = {
-    Resource.USERS: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE]
-}

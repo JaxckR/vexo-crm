@@ -1,9 +1,9 @@
 from sqlalchemy import select, and_
 from sqlalchemy.exc import IntegrityError
 
-from vexo.application.exceptions import AlreadyExistsError
-from vexo.application.ports.repositories.user import UserRepository
-from vexo.domain.entities.user import User, UserId
+from vexo.application.exceptions import AlreadyExistsError, NotFoundError
+from vexo.application.ports.repositories.user import UserRepository, UserRoleRepository
+from vexo.domain.entities.user import User, UserId, UserRole
 from vexo.infrastructure.persistence.adapters.common import SQLAMixin
 
 
@@ -24,6 +24,7 @@ class UserRepositoryImpl(SQLAMixin, UserRepository):
             await self._session.flush()
         except IntegrityError as exc:
             self._handle_exceptions(exc)
+            await self._session.rollback()
 
     def _handle_exceptions(self, exc: IntegrityError) -> None:
         exc = str(exc)
@@ -31,3 +32,10 @@ class UserRepositoryImpl(SQLAMixin, UserRepository):
             raise AlreadyExistsError("Login already exists")
         elif "uq_users_email" in exc:
             raise AlreadyExistsError("Email already exists")
+        elif "fk_users_organization_id_organizations" in exc:
+            raise NotFoundError("Organization not found")
+
+
+class UserRoleRepositoryImpl(SQLAMixin, UserRoleRepository):
+    def add(self, instance: UserRole) -> None:
+        self._session.add(instance)
